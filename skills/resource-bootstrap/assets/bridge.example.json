@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "resource_profile": ".agent/resources.json",
+  "mappings": [
+    {
+      "kind": "npm",
+      "original": "https://registry.npmjs.org/",
+      "resolved": "https://npm.internal.example/",
+      "evidence": "EXAMPLE ONLY: replace with the confirmed registry source"
+    },
+    {
+      "kind": "git",
+      "original": "https://github.com/example/library.git",
+      "resolved": "https://git.internal.example/mirrors/library.git",
+      "evidence": "EXAMPLE ONLY: confirm that this exact mirror repository exists"
+    },
+    {
+      "kind": "artifact",
+      "original": "https://downloads.example/tool-1.0.tar.gz",
+      "resolved": "https://artifacts.internal.example/tools/tool-1.0.tar.gz",
+      "integrity": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence": "EXAMPLE ONLY: replace with the real artifact mapping and integrity"
+    }
+  ]
+}

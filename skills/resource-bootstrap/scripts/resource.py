@@ -6,6 +6,7 @@ import json
 import multiprocessing
 import os
 import re
+import runpy
 import socket
 import ssl
 import sys
@@ -444,6 +445,9 @@ def main(argv=None):
     parser.add_argument("--profile")
     parser.add_argument("--plan")
     sub = parser.add_subparsers(dest="command", required=True)
+    bridge_parser = sub.add_parser("bridge", help="analyze/plan/apply/verify/restore an internal-resource bridge")
+    bridge_parser.add_argument("--config", dest="bridge_config", default=".agent/bridge.json")
+    bridge_parser.add_argument("bridge_args", nargs=argparse.REMAINDER)
     sub.add_parser("analyze"); sub.add_parser("list")
     rs = sub.add_parser("resolve"); rs.add_argument("--image", required=True); rs.add_argument("--push-target")
     cs = sub.add_parser("check"); cs.add_argument("--dockerfiles", action="store_true")
@@ -455,6 +459,14 @@ def main(argv=None):
     try:
         if not root.is_dir():
             raise ConfigError("root must be an existing directory")
+        if args.command == "bridge":
+            if args.profile or args.plan:
+                raise ConfigError("bridge uses --config and its resource_profile field, not setup --profile/--plan")
+            bridge_path = Path(__file__).with_name("bridge.py")
+            if not bridge_path.is_file():
+                raise ConfigError("bridge requires sibling bridge.py and bridge_io.py; copy the complete scripts directory")
+            bridge = runpy.run_path(str(bridge_path))
+            return bridge["main"](["--root", str(root), "--config", args.bridge_config, *args.bridge_args])
         if args.command == "analyze":
             candidates, hints, findings = analyze(str(root))
             emit("attention" if findings else "ok", findings, requirements=candidates, hints=hints, validation="offline Dockerfile and manifest-marker scan")

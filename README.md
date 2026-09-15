@@ -80,3 +80,37 @@ Dockerfile gate 的涵蓋範圍與全域網路限制的界線見 [images.md](ski
 模型試跑方式與紀錄見 [evaluation.md](skills/resource-bootstrap/references/evaluation.md)。
 本次 17 項離線測試通過，1 項 HTTP 整合測試因權限請求未完成而未執行。
 GPT-5.6 terra（medium）已完成 Go container 範例的 profile、mirror 改寫與離線 gate 試跑。
+
+### Bridge Mode：既有專案遷移
+
+同一個 skill 也實作了 [`bridge-resource.md`](bridge-resource.md) 的方向，入口為
+[Bridge Mode](skills/resource-bootstrap/references/bridge.md)。沿用 Setup 的 resource profile，不另外維護一份 registry resolver。
+
+> 使用 resource-bootstrap 的 Bridge Mode，把這個 repo 的外部依賴來源改成我提供的內部資源；先檢查 plan，再套用並驗證，缺少 mapping 時不要猜。
+
+```sh
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge analyze
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge plan
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge plan --save
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge apply
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge verify --static
+python3 <skill-dir>/scripts/resource.py --root <repo> bridge restore --transaction <id>
+```
+
+- plan 預設唯讀；apply 比對設定、檔案雜湊與精確位置，保留 lock、備份及還原能力。
+- 內建支援 Dockerfile FROM、npm registry、npm lockfile artifact、HTTPS submodule、簡單 curl／wget。
+- 保留 package identity、版本及 integrity；未知映射與不支持的格式阻擋改寫。
+- Go／Python／Cargo／Maven、CI YAML 與複雜腳本需按專案補 native adapter；不可用字串批次替換假裝完成。
+- `verify --static` 只驗證支援的靜態形式；`verify` 預設非零並明列 runtime 未執行。
+  真正的隔離 build／test 必須有 host 網路限制及實際 witness，詳見 [runtime 指引](skills/resource-bootstrap/references/bridge-runtime.md)。
+
+Bridge 的程式附件同樣只使用 Python 3.9+ 標準函式庫，必須保留整個 `scripts/` 目錄。
+
+```sh
+python3 -I -S skills/resource-bootstrap/scripts/test_bridge.py
+python3 -I -S skills/resource-bootstrap/scripts/test_bridge_io.py
+```
+
+Bridge 的 24 項離線測試通過；GPT-5.6 terra（medium）已試跑支援範圍內的 plan／apply／static verify，
+也確認遇到尚未支援的 npm build context 會保留阻擋。完整範圍與限制見
+[試跑紀錄](skills/resource-bootstrap/references/evaluation.md)。

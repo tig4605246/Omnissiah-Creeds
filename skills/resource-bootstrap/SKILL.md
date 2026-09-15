@@ -1,6 +1,6 @@
 ---
 name: resource-bootstrap
-description: 開發、建置、CI 或部署需要 Git、registry、mirror、套件來源或 Kubernetes 時，先盤點、解析並驗證資源；建立不含秘密的 resource map，避免誤用工具預設端點。也用於診斷資源設定缺口與鏡像來源。
+description: 盤點、解析與驗證開發需要的 Git、registry、mirror、套件來源與 Kubernetes；也可用 Bridge Mode 將既有專案的外部依賴來源改為已確認的內部資源，產生 plan、套用可回復改寫並驗證。
 ---
 
 # Resource Bootstrap
@@ -8,12 +8,22 @@ description: 開發、建置、CI 或部署需要 Git、registry、mirror、套�
 先確認任務要使用哪些資源，再執行依賴它們的命令。
 產物是有來源依據的 resource profile、任務需求表與驗證紀錄。
 
+## 先選 Mode
+
+| 任務 | 路徑 |
+| --- | --- |
+| 發現環境資源、準備新工作的 preflight | 按下方 Setup 步驟 1–5 |
+| 分析或遷移既有專案，使來源改走已提供的內部資源 | 先讀 [Bridge Mode](references/bridge.md)，按其步驟執行 |
+
+Bridge 缺少環境資訊時才回到相關 Setup 步驟；已提供的 mapping 不重新詢問。
+
 ## 執行方式
 
 - 支持 Codex、OpenCode 或具有讀檔、編輯與終端機能力的 agent；單一 agent 即可完成流程。
 - 文件連結與 `scripts/resource.py` 相對於 **skill 目錄**；`--root` 指向 **目標 repo**。
 - CLI 使用 Python 3.9+ 標準函式庫。使用 `python3`，Windows 可用 `py -3`。不需要 `pip`、`uv`、`npm` 或 `go get`。
-- CLI 的 analyze、list、resolve、check 都離線；只有 doctor 會連線。工具不改寫 repo、登入服務、下載映像或部署。
+- Setup 的 analyze、list、resolve、check 都離線且不改檔；只有 doctor 會連線。
+  Bridge 命令也全部離線；plan 預設唯讀，`plan --save`、apply、restore 會寫檔。工具不登入、下載映像或部署。
 - 先看命令實際會接觸的端點；既有設定及使用者已給的授權可以沿用。
   工具的預設公共端點本身不構成任務選擇。未知端點先解析，有 internal mirror 時按已確認政策使用。
 
@@ -112,4 +122,5 @@ python3 <skill-dir>/scripts/resource.py --root <repo> check --dockerfiles
 ## 維護本 skill
 
 修改 CLI 後執行 `python3 -I -S scripts/test_resource.py`（相對 skill 目錄）。
+Bridge 另執行 `python3 -I -S scripts/test_bridge.py` 與 `python3 -I -S scripts/test_bridge_io.py`。
 調整流程後，依 [行為試跑](references/evaluation.md) 在隔離環境驗證。

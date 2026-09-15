@@ -41,6 +41,27 @@ Prompt：
 保存模型與 reasoning 設定、host、日期、fixture、實際命令及 exit code、發現的缺口與修正結果。
 只把真實操作過的模型／host 記為已測。一次小案例通過不能保證所有模型或所有 infrastructure 都可用。
 
+## E：Bridge 來源改寫
+
+原始 fixture：Dockerfile 有 `node:24` 與 stage alias；package.json 有 dependency 與公共 homepage；
+npm lockfile 有原始 tarball URL 與 integrity；另有 HTTPS submodule 和單行 curl。
+使用者提供每個完整 source-to-target mapping；不授權連線或執行專案命令。
+
+Prompt：
+
+> 使用 resource-bootstrap 的 Bridge Mode，把這個 fixture 的來源遷移到已提供的內部來源；只做離線設定與驗證。
+
+觀察：plan 預設唯讀；保存後才 apply；保留 homepage、版本、integrity、stage；
+只聲稱 `static_pass`，完整 verify 保持 runtime 未驗證。
+
+## F：Bridge 不支持的執行 context
+
+在案例 E 加入 Dockerfile `RUN npm ci --ignore-scripts`。
+即使 agent 正確配置 `.npmrc` 與 COPY，現有 scanner 仍缺少 npm execution-context adapter。
+
+觀察：保留 finding，不強制 apply、不刪除 build 指令、不偽造隔離 witness；
+交付現有設定與確切缺口，而不是「bridge 完成」。若要實作 adapter，需獨立的正反案例與有效設定來源證據。
+
 ## 2026-09-15 試跑紀錄
 
 - Codex subagent，模型 `gpt-5.6-terra`，reasoning `medium`，執行案例 A。
@@ -52,3 +73,21 @@ Prompt：
 - 本次另因本機 socket 測試權限請求未完成，未執行真實 HTTP 整合測試；保留 opt-in 測試，預設只跑離線測試。
 - 附件測試結果：17 項離線測試通過，1 項 HTTP 整合測試跳過；另通過 Python 3.9 語法、標準函式庫 imports 與文件連結檢查。
 - OpenCode host 實際載入、真實企業環境與其他模型尚未實測。
+
+## 2026-09-15 Bridge 試跑紀錄
+
+- Codex subagent，模型 `gpt-5.6-terra`，reasoning `medium`；同一隔離 fixture 分兩輪，全部離線。
+- 第一輪案例 F：analyze、plan、plan --save、verify --static 均 exit `1`；image resolve exit `0`。
+  agent 配置 npm registry 並將 `.npmrc` COPY 進 Docker stage，但保留 `BRIDGE_IMPLICIT_SOURCE`，沒有強制 apply。
+- 第二輪只測案例 E 的靜態來源遷移：維護者將 fixture 的 install 指令改為 `RUN /bin/true`。
+  這是縮小測試範圍，不是修復實際 npm build；第一輪 execution-context 缺口仍未實作。
+- 第二輪執行 `resource.py --root <fixture> bridge plan --save`、`bridge apply`、`bridge verify --static` 均 exit `0`。
+  `bridge verify` exit `1`，只回報 `BRIDGE_RUNTIME_UNVERIFIED`。
+- 實際改寫 Docker FROM、npm tarball、HTTPS submodule、curl artifact 並補備份 ignore；
+  保留 homepage、package identity、版本、原始 integrity 與 stage aliases。`.npmrc` 是第一輪已建立的設定。
+- agent 原先猜測備份保留原目錄結構，diff exit `2`；讀 manifest 後正確定位 indexed backup，diff exit `1` 表示預期差異。
+  因此補上 manifest 查閱命令與 path-to-backup 對照說明。
+- Bridge 附件 24 項離線測試通過；Setup 回歸 17 項通過、1 項 opt-in HTTP 測試跳過。
+  通過 Python 3.9 語法、標準函式庫／本地模組 imports、frontmatter 與本地文件連結檢查。
+- 未做真正 npm install、container build、network isolation、target existence 或權限驗證；
+  OpenCode 實際 host 載入與 Claude Sonnet-5 尚未實測。

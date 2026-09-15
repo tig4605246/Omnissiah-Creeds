@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "requirements": [
+    {
+      "id": "base-image",
+      "required": true,
+      "kind": "image",
+      "value": "docker.io/library/alpine:3.20",
+      "reason": "Container build base image",
+      "source": "Dockerfile:1"
+    },
+    {
+      "id": "application-push",
+      "required": false,
+      "kind": "push",
+      "value": "application",
+      "reason": "Optional publish destination",
+      "source": "deployment-plan"
+    }
+  ]
+}

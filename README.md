@@ -51,3 +51,32 @@ runner 是命令執行器；具體架構、安全與合約規則由 skill 引導
 模型行為的試跑方式見 [evaluation.md](skills/harness-engineering/references/evaluation.md)。
 附件共 18 項測試通過。另以 GPT-5.6 terra 試跑小專案，依首次漏檢補強指引後通過 13 項專案測試；
 詳細範圍與限制記錄於同一文件，Claude Sonnet-5 尚未實測。
+
+## Resource Bootstrap skill
+
+[`skills/resource-bootstrap/SKILL.md`](skills/resource-bootstrap/SKILL.md)
+將 [`resource-bootstrap.md`](resource-bootstrap.md) 的方向轉成開發前的資源盤點與驗證流程。
+
+- 從本次任務列出需求，查現有設定，只詢問缺口。
+- 用 JSON 保存 endpoint、mirror 與 credential reference，分開設定、連線、認證與操作權限。
+- 標準函式庫 CLI 提供 `analyze`、`list`、`resolve`、`check`、`doctor`。
+- Pull proxy 與 push project 分開；`check --dockerfiles` 檢查實際 FROM 是否已使用解析後的完整路徑。
+- doctor 有時間界線、不跟隨 redirect、不傳送 credential；401／403 不代表已取得操作權限。
+
+將整個 `skills/resource-bootstrap/` 複製到目標 repo 的 `.agents/skills/resource-bootstrap/`，
+即可使用上方的 Codex／OpenCode 共用格式。也可直接請 agent 讀取此 `SKILL.md`。
+
+> 使用 resource-bootstrap，先盤點這次 container build 需要的資源，沿用 repo 已有的 registry 與 mirror，完成必要的 preflight 後繼續工作。
+
+驗證附件：
+
+```sh
+python3 -I -S skills/resource-bootstrap/scripts/test_resource.py
+```
+
+預設測試使用暫存檔案與模擬的傳輸回應，不開 socket。工具不需要第三方套件。
+另有 opt-in 的本機 HTTP 整合測試：在允許本機連線的環境下，以 `RESOURCE_TEST_NETWORK=1` 執行同一測試命令。
+Dockerfile gate 的涵蓋範圍與全域網路限制的界線見 [images.md](skills/resource-bootstrap/references/images.md)；
+模型試跑方式與紀錄見 [evaluation.md](skills/resource-bootstrap/references/evaluation.md)。
+本次 17 項離線測試通過，1 項 HTTP 整合測試因權限請求未完成而未執行。
+GPT-5.6 terra（medium）已完成 Go container 範例的 profile、mirror 改寫與離線 gate 試跑。

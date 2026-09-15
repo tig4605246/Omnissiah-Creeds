@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "resources": {
+    "internal-registry": {
+      "kind": "registry",
+      "endpoint": "https://registry.internal.example",
+      "evidence": "EXAMPLE: approved internal registry reference",
+      "credentials": {
+        "robot-token": { "source": "env", "name": "INTERNAL_REGISTRY_TOKEN" }
+      }
+    }
+  },
+  "image_routes": {
+    "docker.io": {
+      "registry_resource": "internal-registry",
+      "namespace": "cache",
+      "confirmed_proxy": true,
+      "evidence": "EXAMPLE: proxy route confirmed by platform team"
+    }
+  },
+  "push_targets": {
+    "application": {
+      "registry_resource": "internal-registry",
+      "namespace": "applications"
+    }
+  },
+  "direct_registries": []
+}

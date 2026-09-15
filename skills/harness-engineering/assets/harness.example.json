@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "owner": "example-project",
+  "checks": [
+    {
+      "id": "unit-tests",
+      "argv": ["python3", "-m", "unittest", "discover", "-s", "tests"],
+      "source": "tests/",
+      "expected": "All standard-library unit tests pass",
+      "suggested_fix": "Fix the failing test and rerun verification",
+      "timeout_seconds": 120,
+      "cwd": "."
+    }
+  ]
+}
